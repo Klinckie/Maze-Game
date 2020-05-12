@@ -1,6 +1,8 @@
-const { Engine, Render, Runner, World, Bodies, MouseConstraint, Mouse } = Matter;
+const { Engine, Render, Runner, World, Bodies } = Matter;
 
-const width = 800;
+const vcells = 3;
+const hcells = 3;
+const width = 600;
 const height = 600;
 
 const engine = Engine.create();
@@ -9,20 +11,13 @@ const render = Render.create({
 	element: document.body,
 	engine: engine,
 	options: {
-		wireframes: false,
+		wireframes: true,
 		width,
 		height
 	}
 });
 Render.run(render);
 Runner.run(Runner.create(), engine);
-
-World.add(
-	world,
-	MouseConstraint.create(engine, {
-		mouse: Mouse.create(render.canvas)
-	})
-);
 
 // Walls
 const walls = [
@@ -33,19 +28,10 @@ const walls = [
 ];
 World.add(world, walls);
 
-// Random Shapes
+// Maze Generation
 
-for (let i = 0; i < 30; i++) {
-	if (Math.random() > 0.5) {
-		World.add(world, Bodies.rectangle(Math.random() * width, Math.random() * height, 50, 50));
-	} else {
-		World.add(
-			world,
-			Bodies.circle(Math.random() * width, Math.random() * height, 35, {
-				render: {
-					fillStyle: 'red'
-				}
-			})
-		);
-	}
-}
+const grid = Array(vcells).fill(null).map(() => Array(hcells).fill(false));
+
+const verticals = Array(vcells).fill(null).map(() => Array(hcells - 1).fill(false));
+
+const horizontals = Array(vcells - 1).fill(null).map(() => Array(hcells).fill(false));

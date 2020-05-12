@@ -1,12 +1,12 @@
 const { Engine, Render, Runner, World, Bodies, Body, Events } = Matter;
 
-const cell = 10;
-const vcells = cell;
-const hcells = cell;
-const width = 600;
-const height = 600;
+const cellsVertical = 7;
+const cellsHorizontal = 16;
+const width = window.innerWidth - 3;
+const height = window.innerHeight - 4;
 
-const unitLength = width / vcells;
+const unitLengthX = width / cellsHorizontal;
+const unitLengthY = height / cellsVertical;
 
 const engine = Engine.create();
 engine.world.gravity.y = 0;
@@ -15,7 +15,7 @@ const render = Render.create({
 	element: document.body,
 	engine: engine,
 	options: {
-		wireframes: true,
+		wireframes: false,
 		width,
 		height
 	}
@@ -50,14 +50,14 @@ const shuffel = (arr) => {
 	return arr;
 };
 
-const grid = Array(vcells).fill(null).map(() => Array(hcells).fill(false));
+const grid = Array(cellsVertical).fill(null).map(() => Array(cellsHorizontal).fill(false));
 
-const verticals = Array(vcells).fill(null).map(() => Array(hcells - 1).fill(false));
+const verticals = Array(cellsVertical).fill(null).map(() => Array(cellsHorizontal - 1).fill(false));
 
-const horizontals = Array(vcells - 1).fill(null).map(() => Array(hcells).fill(false));
+const horizontals = Array(cellsVertical - 1).fill(null).map(() => Array(cellsHorizontal).fill(false));
 
-const startRow = Math.floor(Math.random() * vcells);
-const startColumn = Math.floor(Math.random() * hcells);
+const startRow = Math.floor(Math.random() * cellsVertical);
+const startColumn = Math.floor(Math.random() * cellsHorizontal);
 
 const stepThroughCell = (row, column) => {
 	// If I have visted the cell at [row, column], then return.
@@ -81,7 +81,7 @@ const stepThroughCell = (row, column) => {
 		const [ nextRow, nextColumn, direction ] = neighbor;
 
 		// See if that neighbor is out of bounds
-		if (nextRow < 0 || nextRow >= vcells || nextColumn < 0 || nextColumn >= hcells) {
+		if (nextRow < 0 || nextRow >= cellsVertical || nextColumn < 0 || nextColumn >= cellsHorizontal) {
 			continue;
 		}
 
@@ -116,13 +116,16 @@ horizontals.forEach((row, rowIndex) => {
 		}
 
 		const wall = Bodies.rectangle(
-			columnIndex * unitLength + unitLength / 2,
-			rowIndex * unitLength + unitLength,
-			unitLength,
+			columnIndex * unitLengthX + unitLengthX / 2,
+			rowIndex * unitLengthY + unitLengthY,
+			unitLengthX,
 			5,
 			{
 				label: 'wall',
-				isStatic: true
+				isStatic: true,
+				render: {
+					fillStyle: 'red'
+				}
 			}
 		);
 		World.add(world, wall);
@@ -136,13 +139,16 @@ verticals.forEach((row, rowIndex) => {
 		}
 
 		const wall = Bodies.rectangle(
-			columnIndex * unitLength + unitLength,
-			rowIndex * unitLength + unitLength / 2,
+			columnIndex * unitLengthX + unitLengthX,
+			rowIndex * unitLengthY + unitLengthY / 2,
 			5,
-			unitLength,
+			unitLengthY,
 			{
 				label: 'wall',
-				isStatic: true
+				isStatic: true,
+				render: {
+					fillStyle: 'red'
+				}
 			}
 		);
 		World.add(world, wall);
@@ -151,15 +157,24 @@ verticals.forEach((row, rowIndex) => {
 
 // Goal
 
-const goal = Bodies.rectangle(width - unitLength / 2, height - unitLength / 2, unitLength * 0.5, unitLength * 0.5, {
+const goal = Bodies.rectangle(width - unitLengthX / 2, height - unitLengthY / 2, unitLengthX * 0.5, unitLengthY * 0.5, {
 	label: 'goal',
-	isStatic: true
+	isStatic: true,
+	render: {
+		fillStyle: 'green'
+	}
 });
 World.add(world, goal);
 
 // Ball
 
-const ball = Bodies.circle(unitLength / 2, unitLength / 2, unitLength * 0.25, { label: 'ball' });
+const ballRadius = Math.min(unitLengthX, unitLengthY) / 4;
+const ball = Bodies.circle(unitLengthX / 2, unitLengthY / 2, ballRadius, {
+	label: 'ball',
+	render: {
+		fillStyle: 'blue'
+	}
+});
 World.add(world, ball);
 
 document.addEventListener('keydown', (e) => {
@@ -189,6 +204,7 @@ Events.on(engine, 'collisionStart', (e) => {
 		const labels = [ 'ball', 'goal' ];
 
 		if (labels.includes(collision.bodyA.label) && labels.includes(collision.bodyB.label)) {
+			document.querySelector('.winner').classList.remove('hidden');
 			world.gravity.y = 1;
 			world.bodies.forEach((body) => {
 				if (body.label === 'wall') {
